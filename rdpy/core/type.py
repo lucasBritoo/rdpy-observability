@@ -239,11 +239,20 @@ class SimpleType(Type, CallableValue):
         
         CallableValue.__setValue__(self, value)
         
+    # def __write__(self, s):
+    #     """
+    #     @summary:  Write value in stream
+    #                 Use struct package to pack value
+    #                 In accordance of structFormat field
+    #     @param s: Stream that will be written
+    #     """
+    #     s.write(struct.pack(self._structFormat, self.value))
+    
     def __write__(self, s):
         """
-        @summary:  Write value in stream
-                    Use struct package to pack value
-                    In accordance of structFormat field
+        @summary: Write value in stream
+                Use struct package to pack value
+                In accordance of structFormat field
         @param s: Stream that will be written
         """
         s.write(struct.pack(self._structFormat, self.value))
@@ -260,18 +269,33 @@ class SimpleType(Type, CallableValue):
             raise InvalidSize("Stream is too small to read expected SimpleType")
         self.value = struct.unpack(self._structFormat, s.read(self._typeSize))[0]
       
+    # def mask(self):
+    #     """
+    #     @summary:  Compute bit mask for type
+    #                 Because in Python all numbers are Int long or float
+    #                 Cache result in self._mask field
+    #     """
+    #     if not self.__dict__.has_key("_mask"):
+    #         mask = 0xff
+    #         for _ in range(1, self._typeSize):
+    #             mask = mask << 8 | 0xff
+    #         self._mask = mask
+    #     return self._mask
+    
     def mask(self):
         """
         @summary:  Compute bit mask for type
                     Because in Python all numbers are Int long or float
                     Cache result in self._mask field
         """
-        if not self.__dict__.has_key("_mask"):
+        if "_mask" not in vars(self):
             mask = 0xff
-            for _ in range(1, self._typeSize):
-                mask = mask << 8 | 0xff
+            for _ in range(1, int(self._typeSize)):
+                mask = (mask << 8) | 0xff
             self._mask = mask
         return self._mask
+
+    
     
     def isInRange(self, value):
         """

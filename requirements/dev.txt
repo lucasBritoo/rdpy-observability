@@ -6,3 +6,4 @@ rsa
 pyasn1
 pyqt5
 stream-python
+pycryptodome

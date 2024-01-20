@@ -29,6 +29,7 @@ import rdpy.security.rc4 as rc4
 from rdpy.security.rsa_wrapper import random
 from rdpy.core.type import CompositeType, CallableValue, String, UInt8, UInt16Le, UInt24Le, UInt32Le, sizeof, Stream
 from rdpy.core import filetimes, error
+from Crypto.Hash import MD4 as Md4lib
 
 class MajorVersion(object):
     """
@@ -354,13 +355,23 @@ def UNICODE(s):
     """
     return s.encode('utf-16le')
 
+# def MD4(s):
+#     """
+#     @summary: compute the md4 sum
+#     @param s: {str} input data
+#     @return: {str} MD4(s)
+#     """
+#     return hashlib.new('md4', s).digest()
+
 def MD4(s):
     """
     @summary: compute the md4 sum
-    @param s: {str} input data
-    @return: {str} MD4(s)
+    @param s: {bytes} input data
+    @return: {bytes} MD4(s)
     """
-    return hashlib.new('md4', s).digest()
+    md4_hash = Md4lib.new()
+    md4_hash.update(s)
+    return md4_hash.digest()
 
 def MD5(s):
     """
