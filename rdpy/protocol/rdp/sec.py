@@ -21,9 +21,9 @@
 RDP Standard security layer
 """
 
-import sha, md5
-import lic, tpkt
-from t125 import gcc, mcs
+import hashlib
+import rdpy.protocol.rdp.lic as lic, rdpy.protocol.rdp.tpkt as tpkt
+from rdpy.protocol.rdp.t125 import gcc, mcs
 from rdpy.core.type import CompositeType, CallableValue, Stream, UInt32Le, UInt16Le, String, sizeof, UInt8
 from rdpy.core.layer import LayerAutomata, IStreamSender
 from rdpy.core.error import InvalidExpectedDataException
@@ -107,18 +107,18 @@ def saltedHash(inputData, salt, salt1, salt2):
     @param salt2: another another salt (ex: server random)
     @return : MD5(Salt + SHA1(Input + Salt + Salt1 + Salt2))
     """
-    sha1Digest = sha.new()
-    md5Digest = md5.new()
-    
+    sha1Digest = hashlib.sha1()
+    md5Digest = hashlib.md5()
+
     sha1Digest.update(inputData)
     sha1Digest.update(salt[:48])
     sha1Digest.update(salt1)
     sha1Digest.update(salt2)
     sha1Sig = sha1Digest.digest()
-    
+
     md5Digest.update(salt[:48])
     md5Digest.update(sha1Sig)
-    
+
     return md5Digest.digest()
 
 def finalHash(key, random1, random2):
@@ -157,84 +157,79 @@ def sessionKeyBlob(secret, random1, random2):
 def macData(macSaltKey, data):
     """
     @see: http://msdn.microsoft.com/en-us/library/cc241995.aspx
-    @param macSaltKey: {str} mac key
-    @param data: {str} data to sign
-    @return: {str} signature
+    @param macSaltKey: {bytes} mac key
+    @param data: {bytes} data to sign
+    @return: {bytes} signature
     """
-    sha1Digest = sha.new()
-    md5Digest = md5.new()
-    
-    #encode length
-    dataLength = Stream()
-    dataLength.writeType(UInt32Le(len(data)))
-    
+    sha1Digest = hashlib.sha1()
+    md5Digest = hashlib.md5()
+
+    # Encode length
+    dataLength = struct.pack("<I", len(data))
+
     sha1Digest.update(macSaltKey)
-    sha1Digest.update("\x36" * 40)
-    sha1Digest.update(dataLength.getvalue())
+    sha1Digest.update(b"\x36" * 40)
+    sha1Digest.update(dataLength)
     sha1Digest.update(data)
-    
+
     sha1Sig = sha1Digest.digest()
-    
+
     md5Digest.update(macSaltKey)
-    md5Digest.update("\x5c" * 48)
+    md5Digest.update(b"\x5c" * 48)
     md5Digest.update(sha1Sig)
-    
+
     return md5Digest.digest()
 
 def macSaltedData(macSaltKey, data, encryptionCount):
     """
     @see: https://msdn.microsoft.com/en-us/library/cc240789.aspx
-    @param macSaltKey: {str} mac key
-    @param data: {str} data to sign
+    @param macSaltKey: {bytes} mac key
+    @param data: {bytes} data to sign
     @param encryptionCount: nb encrypted packet
-    @return: {str} signature
+    @return: {bytes} signature
     """
-    sha1Digest = sha.new()
-    md5Digest = md5.new()
-    
-    #encode length
-    dataLengthS = Stream()
-    dataLengthS.writeType(UInt32Le(len(data)))
-    
-    encryptionCountS = Stream()
-    encryptionCountS.writeType(UInt32Le(encryptionCount))
-    
+    sha1Digest = hashlib.sha1()
+    md5Digest = hashlib.md5()
+
+    # Encode length
+    dataLengthS = struct.pack("<I", len(data))
+    encryptionCountS = struct.pack("<I", encryptionCount)
+
     sha1Digest.update(macSaltKey)
-    sha1Digest.update("\x36" * 40)
-    sha1Digest.update(dataLengthS.getvalue())
+    sha1Digest.update(b"\x36" * 40)
+    sha1Digest.update(dataLengthS)
     sha1Digest.update(data)
-    sha1Digest.update(encryptionCountS.getvalue())
-    
+    sha1Digest.update(encryptionCountS)
+
     sha1Sig = sha1Digest.digest()
-    
+
     md5Digest.update(macSaltKey)
-    md5Digest.update("\x5c" * 48)
+    md5Digest.update(b"\x5c" * 48)
     md5Digest.update(sha1Sig)
-    
+
     return md5Digest.digest()
 
 def tempKey(initialKey, currentKey):
     """
     @see: http://msdn.microsoft.com/en-us/library/cc240792.aspx
-    @param initialKey: {str} key computed first time
-    @param currentKey: {str} key actually used
-    @return: {str} temp key
+    @param initialKey: {bytes} key computed first time
+    @param currentKey: {bytes} key actually used
+    @return: {bytes} temp key
     """
-    sha1Digest = sha.new()
-    md5Digest = md5.new()
-    
-    sha1Digest.update(initialKey)
-    sha1Digest.update("\x36" * 40)
-    sha1Digest.update(currentKey)
-    
-    sha1Sig = sha1Digest.digest()
-    
-    md5Digest.update(initialKey)
-    md5Digest.update("\x5c" * 48)
-    md5Digest.update(sha1Sig)
-    
-    return md5Digest.digest()
+    sha1Digest = hashlib.sha1()
+    md5Digest = hashlib.md5()
 
+    sha1Digest.update(initialKey)
+    sha1Digest.update(b"\x36" * 40)
+    sha1Digest.update(currentKey)
+
+    sha1Sig = sha1Digest.digest()
+
+    md5Digest.update(initialKey)
+    md5Digest.update(b"\x5c" * 48)
+    md5Digest.update(sha1Sig)
+
+    return md5Digest.digest()
 def gen40bits(data):
     """
     @summary: generate 40 bits data from 128 bits data

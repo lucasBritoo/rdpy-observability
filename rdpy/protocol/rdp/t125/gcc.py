@@ -22,9 +22,9 @@ Implement GCC structure use in RDP protocol
 http://msdn.microsoft.com/en-us/library/cc240508.aspx
 """
 
-import md5
+import hashlib
 from rdpy.core.type import UInt8, UInt16Le, UInt32Le, CompositeType, CallableValue, String, Stream, sizeof, FactoryType, ArrayType
-import per, mcs
+import rdpy.protocol.rdp.t125.per as per, rdpy.protocol.rdp.t125.mcs as mcs
 from rdpy.core.error import InvalidExpectedDataException
 from rdpy.core import log
 from rdpy.security import x509
@@ -377,11 +377,11 @@ class ProprietaryServerCertificate(CompositeType):
         s.writeType(self.wPublicKeyBlobType)
         s.writeType(self.wPublicKeyBlobLen)
         s.writeType(self.PublicKeyBlob)
-    
-        md5Digest = md5.new()
+
+        md5Digest = hashlib.md5()
         md5Digest.update(s.getvalue())
-        
-        return md5Digest.digest() + "\x00" + "\xff" * 45 + "\x01"
+
+        return md5Digest.digest() + b"\x00" + b"\xff" * 45 + b"\x01"
         
     def sign(self):
         """

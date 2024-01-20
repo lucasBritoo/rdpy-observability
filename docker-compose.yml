@@ -1,0 +1,11 @@
+version: "3.4"
+
+services:
+  app:
+    build:
+      context: .
+    volumes:
+      - .:/home/app
+    stdin_open: true     
+    tty: true            
+    entrypoint: tail -f /dev/null

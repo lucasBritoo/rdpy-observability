@@ -23,13 +23,14 @@ Use to manage RDP stack in twisted
 
 from rdpy.core import layer
 from rdpy.core.error import CallPureVirtualFuntion, InvalidValue
-import pdu.layer
-import pdu.data
-import pdu.caps
+import rdpy.protocol.rdp.pdu.layer as PduLayer
+import rdpy.protocol.rdp.pdu.data as PduData
+import rdpy.protocol.rdp.pdu.caps as PduCaps
+# import rdpy.protocol.rdp.pdu as pdu
 import rdpy.core.log as log
-import tpkt, x224, sec
-from t125 import mcs, gcc
-from nla import cssp, ntlm
+import rdpy.protocol.rdp.tpkt as tpkt, rdpy.protocol.rdp.x224 as x224, rdpy.protocol.rdp.sec as sec
+from rdpy.protocol.rdp.t125 import mcs, gcc
+from rdpy.protocol.rdp.nla import cssp, ntlm
 
 class SecurityLevel(object):
     """
@@ -39,7 +40,7 @@ class SecurityLevel(object):
     RDP_LEVEL_SSL = 1
     RDP_LEVEL_NLA = 2
 
-class RDPClientController(pdu.layer.PDUClientListener):
+class RDPClientController(PduLayer.PDUClientListener):
     """
     Manage RDP stack as client
     """
@@ -47,7 +48,7 @@ class RDPClientController(pdu.layer.PDUClientListener):
         #list of observer
         self._clientObserver = []
         #PDU layer
-        self._pduLayer = pdu.layer.Client(self)
+        self._pduLayer = PduLayer.Client(self)
         #secure layer
         self._secLayer = sec.Client(self._pduLayer)
         #multi channel service
@@ -73,13 +74,13 @@ class RDPClientController(pdu.layer.PDUClientListener):
         """
         @return: color depth set by the server (15, 16, 24)
         """
-        return self._pduLayer._serverCapabilities[pdu.caps.CapsType.CAPSTYPE_BITMAP].capability.preferredBitsPerPixel.value
+        return self._pduLayer._serverCapabilities[PduCaps.CapsType.CAPSTYPE_BITMAP].capability.preferredBitsPerPixel.value
     
     def getKeyEventUniCodeSupport(self):
         """
         @return: True if server support unicode input
         """
-        return self._pduLayer._serverCapabilities[pdu.caps.CapsType.CAPSTYPE_INPUT].capability.inputFlags.value & pdu.caps.InputFlags.INPUT_FLAG_UNICODE
+        return self._pduLayer._serverCapabilities[PduCaps.CapsType.CAPSTYPE_INPUT].capability.inputFlags.value & PduCaps.InputFlags.INPUT_FLAG_UNICODE
         
     def setPerformanceSession(self):
         """
@@ -188,7 +189,7 @@ class RDPClientController(pdu.layer.PDUClientListener):
         for observer in self._clientObserver:
             #for each rectangle in update PDU
             for rectangle in rectangles:
-                observer.onUpdate(rectangle.destLeft.value, rectangle.destTop.value, rectangle.destRight.value, rectangle.destBottom.value, rectangle.width.value, rectangle.height.value, rectangle.bitsPerPixel.value, rectangle.flags.value & pdu.data.BitmapFlag.BITMAP_COMPRESSION, rectangle.bitmapDataStream.value)
+                observer.onUpdate(rectangle.destLeft.value, rectangle.destTop.value, rectangle.destRight.value, rectangle.destBottom.value, rectangle.width.value, rectangle.height.value, rectangle.bitsPerPixel.value, rectangle.flags.value & PduData.BitmapFlag.BITMAP_COMPRESSION, rectangle.bitmapDataStream.value)
                 
     def onReady(self):
         """
@@ -229,28 +230,28 @@ class RDPClientController(pdu.layer.PDUClientListener):
 
         try:
             if button == 4 or button == 5:
-                event = pdu.data.PointerExEvent()
+                event = PduData.PointerExEvent()
                 if isPressed:
-                    event.pointerFlags.value |= pdu.data.PointerExFlag.PTRXFLAGS_DOWN
+                    event.pointerFlags.value |= PduData.PointerExFlag.PTRXFLAGS_DOWN
 
                 if button == 4:
-                    event.pointerFlags.value |= pdu.data.PointerExFlag.PTRXFLAGS_BUTTON1
+                    event.pointerFlags.value |= PduData.PointerExFlag.PTRXFLAGS_BUTTON1
                 elif button == 5:
-                    event.pointerFlags.value |= pdu.data.PointerExFlag.PTRXFLAGS_BUTTON2
+                    event.pointerFlags.value |= PduData.PointerExFlag.PTRXFLAGS_BUTTON2
 
             else:
-                event = pdu.data.PointerEvent()
+                event = PduData.PointerEvent()
                 if isPressed:
-                    event.pointerFlags.value |= pdu.data.PointerFlag.PTRFLAGS_DOWN
+                    event.pointerFlags.value |= PduData.PointerFlag.PTRFLAGS_DOWN
                 
                 if button == 1:
-                    event.pointerFlags.value |= pdu.data.PointerFlag.PTRFLAGS_BUTTON1
+                    event.pointerFlags.value |= PduData.PointerFlag.PTRFLAGS_BUTTON1
                 elif button == 2:
-                    event.pointerFlags.value |= pdu.data.PointerFlag.PTRFLAGS_BUTTON2
+                    event.pointerFlags.value |= PduData.PointerFlag.PTRFLAGS_BUTTON2
                 elif button == 3:
-                    event.pointerFlags.value |= pdu.data.PointerFlag.PTRFLAGS_BUTTON3
+                    event.pointerFlags.value |= PduData.PointerFlag.PTRFLAGS_BUTTON3
                 else:
-                    event.pointerFlags.value |= pdu.data.PointerFlag.PTRFLAGS_MOVE
+                    event.pointerFlags.value |= PduData.PointerFlag.PTRFLAGS_MOVE
             
             # position
             event.xPos.value = x
@@ -275,16 +276,16 @@ class RDPClientController(pdu.layer.PDUClientListener):
             return
 
         try:
-            event = pdu.data.PointerEvent()
+            event = PduData.PointerEvent()
             if isHorizontal:
-                event.pointerFlags.value |= pdu.data.PointerFlag.PTRFLAGS_HWHEEL
+                event.pointerFlags.value |= PduData.PointerFlag.PTRFLAGS_HWHEEL
             else:
-                event.pointerFlags.value |= pdu.data.PointerFlag.PTRFLAGS_WHEEL
+                event.pointerFlags.value |= PduData.PointerFlag.PTRFLAGS_WHEEL
                 
             if isNegative:
-                event.pointerFlags.value |= pdu.data.PointerFlag.PTRFLAGS_WHEEL_NEGATIVE
+                event.pointerFlags.value |= PduData.PointerFlag.PTRFLAGS_WHEEL_NEGATIVE
                 
-            event.pointerFlags.value |= (step & pdu.data.PointerFlag.WheelRotationMask)
+            event.pointerFlags.value |= (step & PduData.PointerFlag.WheelRotationMask)
             
             #position
             event.xPos.value = x
@@ -307,13 +308,13 @@ class RDPClientController(pdu.layer.PDUClientListener):
             return
         
         try:
-            event = pdu.data.ScancodeKeyEvent()
+            event = PduData.ScancodeKeyEvent()
             event.keyCode.value = code
             if not isPressed:
-                event.keyboardFlags.value |= pdu.data.KeyboardFlag.KBDFLAGS_RELEASE
+                event.keyboardFlags.value |= PduData.KeyboardFlag.KBDFLAGS_RELEASE
             
             if extended:
-                event.keyboardFlags.value |= pdu.data.KeyboardFlag.KBDFLAGS_EXTENDED
+                event.keyboardFlags.value |= PduData.KeyboardFlag.KBDFLAGS_EXTENDED
                 
             #send event
             self._pduLayer.sendInputEvents([event])
@@ -331,10 +332,10 @@ class RDPClientController(pdu.layer.PDUClientListener):
             return
         
         try:
-            event = pdu.data.UnicodeKeyEvent()
+            event = PduData.UnicodeKeyEvent()
             event.unicode.value = code
             if not isPressed:
-                event.keyboardFlags.value |= pdu.data.KeyboardFlag.KBDFLAGS_RELEASE
+                event.keyboardFlags.value |= PduData.KeyboardFlag.KBDFLAGS_RELEASE
             
             #send event
             self._pduLayer.sendInputEvents([event])
@@ -350,8 +351,8 @@ class RDPClientController(pdu.layer.PDUClientListener):
         @param right: right coordinate
         @param bottom: bottom coordinate
         """
-        refreshPDU = pdu.data.RefreshRectPDU()
-        rect = pdu.data.InclusiveRectangle()
+        refreshPDU = PduData.RefreshRectPDU()
+        rect = PduData.InclusiveRectangle()
         rect.left.value = left
         rect.top.value = top
         rect.right.value = right
@@ -365,7 +366,7 @@ class RDPClientController(pdu.layer.PDUClientListener):
         """
         self._pduLayer.close()
 
-class RDPServerController(pdu.layer.PDUServerListener):
+class RDPServerController(PduLayer.PDUServerListener):
     """
     @summary: Controller use in server side mode
     """               
@@ -379,7 +380,7 @@ class RDPServerController(pdu.layer.PDUServerListener):
         #list of observer
         self._serverObserver = []
         #build RDP protocol stack
-        self._pduLayer = pdu.layer.Server(self)
+        self._pduLayer = PduLayer.Server(self)
         #secure layer
         self._secLayer = sec.Server(self._pduLayer)
         #multi channel service
@@ -452,7 +453,7 @@ class RDPServerController(pdu.layer.PDUServerListener):
         """
         @return: tuple(width, height) of client asked screen
         """
-        bitmapCap = self._pduLayer._clientCapabilities[pdu.caps.CapsType.CAPSTYPE_BITMAP].capability
+        bitmapCap = self._pduLayer._clientCapabilities[PduCaps.CapsType.CAPSTYPE_BITMAP].capability
         return (bitmapCap.desktopWidth.value, bitmapCap.desktopHeight.value)
     
     def addServerObserver(self, observer):
@@ -470,17 +471,17 @@ class RDPServerController(pdu.layer.PDUServerListener):
         @param colorDepth: {integer} depth of session (15, 16, 24)
         """
         self._colorDepth = colorDepth
-        self._pduLayer._serverCapabilities[pdu.caps.CapsType.CAPSTYPE_BITMAP].capability.preferredBitsPerPixel.value = colorDepth
+        self._pduLayer._serverCapabilities[PduCaps.CapsType.CAPSTYPE_BITMAP].capability.preferredBitsPerPixel.value = colorDepth
         if self._isReady:
             #restart connection sequence
             self._isReady = False
-            self._pduLayer.sendPDU(pdu.data.DeactiveAllPDU())
+            self._pduLayer.sendPDU(PduData.DeactiveAllPDU())
             
     def setKeyEventUnicodeSupport(self):
         """
         @summary: Enable key event in unicode format
         """
-        self._pduLayer._serverCapabilities[pdu.caps.CapsType.CAPSTYPE_INPUT].capability.inputFlags.value |= pdu.caps.InputFlags.INPUT_FLAG_UNICODE
+        self._pduLayer._serverCapabilities[PduCaps.CapsType.CAPSTYPE_INPUT].capability.inputFlags.value |= PduCaps.InputFlags.INPUT_FLAG_UNICODE
     
     def onReady(self):
         """
@@ -506,28 +507,28 @@ class RDPServerController(pdu.layer.PDUServerListener):
         for observer in self._serverObserver:
             for event in slowPathInputEvents:
                 #scan code
-                if event.messageType.value == pdu.data.InputMessageType.INPUT_EVENT_SCANCODE:
-                    observer.onKeyEventScancode(event.slowPathInputData.keyCode.value, not (event.slowPathInputData.keyboardFlags.value & pdu.data.KeyboardFlag.KBDFLAGS_RELEASE), bool(event.slowPathInputData.keyboardFlags.value & pdu.data.KeyboardFlag.KBDFLAGS_EXTENDED))
+                if event.messageType.value == PduData.InputMessageType.INPUT_EVENT_SCANCODE:
+                    observer.onKeyEventScancode(event.slowPathInputData.keyCode.value, not (event.slowPathInputData.keyboardFlags.value & PduData.KeyboardFlag.KBDFLAGS_RELEASE), bool(event.slowPathInputData.keyboardFlags.value & PduData.KeyboardFlag.KBDFLAGS_EXTENDED))
                 #unicode
-                elif event.messageType.value == pdu.data.InputMessageType.INPUT_EVENT_UNICODE:
-                    observer.onKeyEventUnicode(event.slowPathInputData.unicode.value, not (event.slowPathInputData.keyboardFlags.value & pdu.data.KeyboardFlag.KBDFLAGS_RELEASE))
+                elif event.messageType.value == PduData.InputMessageType.INPUT_EVENT_UNICODE:
+                    observer.onKeyEventUnicode(event.slowPathInputData.unicode.value, not (event.slowPathInputData.keyboardFlags.value & PduData.KeyboardFlag.KBDFLAGS_RELEASE))
                 #mouse events
-                elif event.messageType.value == pdu.data.InputMessageType.INPUT_EVENT_MOUSE:
-                    isPressed = event.slowPathInputData.pointerFlags.value & pdu.data.PointerFlag.PTRFLAGS_DOWN
+                elif event.messageType.value == PduData.InputMessageType.INPUT_EVENT_MOUSE:
+                    isPressed = event.slowPathInputData.pointerFlags.value & PduData.PointerFlag.PTRFLAGS_DOWN
                     button = 0
-                    if event.slowPathInputData.pointerFlags.value & pdu.data.PointerFlag.PTRFLAGS_BUTTON1:
+                    if event.slowPathInputData.pointerFlags.value & PduData.PointerFlag.PTRFLAGS_BUTTON1:
                         button = 1
-                    elif event.slowPathInputData.pointerFlags.value & pdu.data.PointerFlag.PTRFLAGS_BUTTON2:
+                    elif event.slowPathInputData.pointerFlags.value & PduData.PointerFlag.PTRFLAGS_BUTTON2:
                         button = 2
-                    elif event.slowPathInputData.pointerFlags.value & pdu.data.PointerFlag.PTRFLAGS_BUTTON3:
+                    elif event.slowPathInputData.pointerFlags.value & PduData.PointerFlag.PTRFLAGS_BUTTON3:
                         button = 3
                     observer.onPointerEvent(event.slowPathInputData.xPos.value, event.slowPathInputData.yPos.value, button, isPressed)
-                elif event.messageType.value == pdu.data.InputMessageType.INPUT_EVENT_MOUSEX:
-                    isPressed = event.slowPathInputData.pointerFlags.value & pdu.data.PointerExFlag.PTRXFLAGS_DOWN
+                elif event.messageType.value == PduData.InputMessageType.INPUT_EVENT_MOUSEX:
+                    isPressed = event.slowPathInputData.pointerFlags.value & PduData.PointerExFlag.PTRXFLAGS_DOWN
                     button = 0
-                    if event.slowPathInputData.pointerFlags.value & pdu.data.PointerExFlag.PTRXFLAGS_BUTTON1:
+                    if event.slowPathInputData.pointerFlags.value & PduData.PointerExFlag.PTRXFLAGS_BUTTON1:
                         button = 4
-                    elif event.slowPathInputData.pointerFlags.value & pdu.data.PointerExFlag.PTRXFLAGS_BUTTON2:
+                    elif event.slowPathInputData.pointerFlags.value & PduData.PointerExFlag.PTRXFLAGS_BUTTON2:
                         button = 5
                     observer.onPointerEvent(event.slowPathInputData.xPos.value, event.slowPathInputData.yPos.value, button, isPressed)
 
@@ -547,9 +548,9 @@ class RDPServerController(pdu.layer.PDUServerListener):
         """
         if not self._isReady:
             return
-        bitmapData = pdu.data.BitmapData(destLeft, destTop, destRight, destBottom, width, height, bitsPerPixel, data)
+        bitmapData = PduData.BitmapData(destLeft, destTop, destRight, destBottom, width, height, bitsPerPixel, data)
         if isCompress:
-            bitmapData.flags.value = pdu.data.BitmapFlag.BITMAP_COMPRESSION
+            bitmapData.flags.value = PduData.BitmapFlag.BITMAP_COMPRESSION
         
         self._pduLayer.sendBitmapUpdatePDU([bitmapData])
 
