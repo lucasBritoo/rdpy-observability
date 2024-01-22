@@ -111,27 +111,6 @@ class Type(object):
             raise ValueError("%s const value expected %s != %s"%(self.__class__, old.value, self.value))
             # raise InvalidExpectedDataException("%s const value expected %s != %s"%(self.__class__, old.value, self.value))
         
-    def __read__(self, s):
-        """
-        @summary: Interface definition of private read function
-        @param s: Stream 
-        """
-        raise ValueError("%s:%s defined by interface %s"%(self.__class__, "__read__", "Type"))
-    
-    def __write__(self, s):
-        """
-        @summary: Interface definition of private write function
-        @param s: Stream 
-        """
-        raise ValueError("%s:%s defined by interface %s"%(self.__class__, "__write__", "Type"))
-    
-    def __sizeof__(self):
-        """
-        @summary: Return size of type use for sizeof function
-        @return: size in byte of type
-        """
-        raise ValueError("%s:%s defined by interface %s"%(self.__class__, "__sizeof__", "Type"))
-        
 class CallableValue(object):
     """
     @summary:  Expression evaluate when is get or set
@@ -260,7 +239,13 @@ class SimpleType(Type, CallableValue):
                 In accordance of structFormat field
         @param s: Stream that will be written
         """
-        s.write(struct.pack(self._structFormat, self.value))
+        logger.debug("[SimpleType/__write__]")
+        logger.debug(f'Format: {self._structFormat}     Value: {self.value}')
+        teste = struct.pack(self._structFormat, self.value)
+        print(s)
+        s2 = s
+        # breakpoint()
+        s.write(teste)
         
     def __read__(self, s):
         """
@@ -300,9 +285,7 @@ class SimpleType(Type, CallableValue):
                 mask = (mask << 8) | 0xff
             self._mask = mask
         return self._mask
-
-    
-    
+ 
     def isInRange(self, value):
         """
         @summary: Check if value is in range represented by mask
@@ -943,10 +926,12 @@ class Stream(StringIO):
         @param value: (tuple | Type)
         """
         #write each element of tuple
+        logger.debug(f'[Type/Stream/writeType]')
         if isinstance(value, tuple) or isinstance(value, list):
             for element in value:
                 self.writeType(element)
             return
+        
         value.write(self)
         
 class ArrayType(Type):

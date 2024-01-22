@@ -243,6 +243,8 @@ class RawLayer(protocol.Protocol, LayerAutomata, IStreamSender):
                     And send it to transport layer
         @param message: (tuple | Type)
         """
+        logger.debug(f'[Layer/RawLayer/send]')
         s = Stream()
+        
         s.writeType(message)
         self.transport.write(s.getvalue())

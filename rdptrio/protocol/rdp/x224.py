@@ -79,6 +79,7 @@ class ClientConnectionRequestPDU(CompositeType):
     @see: http://msdn.microsoft.com/en-us/library/cc240470.aspx
     """
     def __init__(self):
+        logger.debug("[X224ClientConnectionRequestPDU]")
         CompositeType.__init__(self)
         self.len = UInt8(lambda:sizeof(self) - 1)
         self.code = UInt8(MessageType.X224_TPDU_CONNECTION_REQUEST, constant = True)
@@ -183,9 +184,11 @@ class Client(X224Layer):
                     Next state is recvConnectionConfirm
         @see: http://msdn.microsoft.com/en-us/library/cc240500.aspx
         """
+        logger.debug("[X224Client/SendConnectionRequest]")
         message = ClientConnectionRequestPDU()
         message.protocolNeg.code.value = NegociationType.TYPE_RDP_NEG_REQ
         message.protocolNeg.selectedProtocol.value = self._requestedProtocol
+        logger.debug("aqui")
         self._transport.send(message)
         self.setNextState(self.recvConnectionConfirm)
         

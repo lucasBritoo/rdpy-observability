@@ -95,6 +95,8 @@ class RDPClientQtFactory():#RawLayerClientFactory):
             controller.setPerformanceSession()
             
         controller.setSecurityLevel(self._security)
+        
+        self.controller = controller
             
     def buildProtocol(self, addr):
         """
@@ -204,3 +206,4 @@ if __name__ == '__main__':
     client = RDPClientQtFactory(width, height, username, password, domain, fullscreen, keyboardLayout, optimized, "nego", recodedPath)
     # breakpoint()
     layer = client.buildProtocol(f'{ip}:{port}')
+    client.controller._x224Layer.connect()

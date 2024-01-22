@@ -213,6 +213,7 @@ class TPKT(RawLayer, IFastPathSender):
         @summary: Send encompassed data
         @param message: {network.Type} message to send
         """
+        logger.debug(f"[TPKT/send]")
         RawLayer.send(self, (UInt8(Action.FASTPATH_ACTION_X224), UInt8(0), UInt16Be(sizeof(message) + 4), message))
         
     def sendFastPath(self, secFlag, fastPathS):
