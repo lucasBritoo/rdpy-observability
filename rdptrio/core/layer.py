@@ -25,6 +25,10 @@ RDPY use Layer Protocol design (like twisted)
 
 # from rdpy.core.error import CallPureVirtualFuntion
 
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 class IStreamListener(object):
     """
     @summary: Interface use to inform stream receiver capability
@@ -115,49 +119,6 @@ from rdptrio.protocol.rdp import rdp
 #first that handle stream     
 from rdptrio.core.type import Stream
 
-class RawLayerClientFactory():
-    """
-    @summary: Abstract class for Raw layer client factory
-    """
-    def buildProtocol(self, addr):
-        """
-        @summary: Function call from twisted
-        @param addr: destination address
-        """
-        rawLayer = self.buildRawLayer(addr)
-        rawLayer.setFactory(self)
-        return rawLayer
-        
-    def connectionLost(self, csspLayer, reason):
-        #retrieve controller
-        tpktLayer = csspLayer._layer
-        x224Layer = tpktLayer._presentation
-        mcsLayer = x224Layer._presentation
-        secLayer = mcsLayer._channels[mcs.Channel.MCS_GLOBAL_CHANNEL]
-        pduLayer = secLayer._presentation
-        controller = pduLayer._listener
-        controller.onClose()
-        
-    def buildRawLayer(self, addr):
-        """
-        @summary: Function call from twisted and build rdp protocol stack
-        @param addr: destination address
-        """
-        controller = rdp.RDPClientController()
-        breakpoint()
-        self.buildObserver(controller, addr)
-        return controller.getProtocol()
-    
-    def connectionLost(self, rawlayer, reason):
-        """
-        @summary: Override this method to handle connection lost
-        @param rawlayer: rawLayer that cause connectionLost event
-        @param reason: twisted reason
-        """
-        raise ValueError("%s:%s defined by interface %s"%(self.__class__, "connectionLost", "RawLayerClientFactory"))
-        
-        # raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "connectionLost", "RawLayerClientFactory"))
-    
 class RawLayerServerFactory(protocol.ServerFactory):
     """
     @summary: Abstract class for Raw layer server factory
@@ -203,6 +164,7 @@ class RawLayer(protocol.Protocol, LayerAutomata, IStreamSender):
         @param presentation: presentation layer in layer list
         """
         #call parent automata
+        logger.debug('[RAWLayer]')
         LayerAutomata.__init__(self, presentation)
         #data buffer received from twisted network layer
         self._buffer = ""

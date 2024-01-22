@@ -25,7 +25,7 @@ Definition of structure use for capabilities nego
 Use in PDU layer
 """
 
-from rdpy.core.type import CompositeType, CallableValue, String, UInt8, UInt16Le, UInt32Le, sizeof, ArrayType, FactoryType
+from rdptrio.core.type import CompositeType, CallableValue, String, UInt8, UInt16Le, UInt32Le, sizeof, ArrayType, FactoryType
     
 class CapsType(object):
     """

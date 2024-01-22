@@ -28,18 +28,22 @@ In this layer are managed all mains bitmap update orders end user inputs
 from rdptrio.core.type import ArrayType
 # import rdpy.core.log as log
 import logging
-from rdptrio.core.layer import LayerAutomata
+# from rdptrio.core.layer import LayerAutomata
 import rdptrio.protocol.rdp.tpkt as tpkt
-import rdptrio.protocol.rdp.pdu.data as data, rdpy.protocol.rdp.pdu.caps as caps
-   
-class PDULayer(tpkt.IFastPathListener):#LayerAutomata, ):
+import rdptrio.protocol.rdp.pdu.data as data, rdptrio.protocol.rdp.pdu.caps as caps
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+class PDULayer(tpkt.IFastPathListener):
     """
     @summary: Global channel for MCS that handle session
     identification user, licensing management, and capabilities exchange
     """
     
     def __init__(self):
-        LayerAutomata.__init__(self, None)
+
+        logger.debug('[PDULayer]')
         #server capabilities
         self._serverCapabilities = {
             caps.CapsType.CAPSTYPE_GENERAL : caps.Capability(caps.GeneralCapability()),
@@ -101,6 +105,7 @@ class Client(PDULayer):
         """
         @param listener: PDUClientListener
         """
+        logger.debug('[PDUClient]')
         PDULayer.__init__(self)
         self._listener = listener
         

@@ -31,6 +31,9 @@ from io import StringIO
 # import rdpy.core.log as log
 import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 def sizeof(element):
     """
     @summary:  Size in Byte of element.
@@ -221,7 +224,7 @@ class SimpleType(Type, CallableValue):
         #and evaluate a this time
         
         if not self.isInRange(value):
-            raise InvalidValue("value is out of range for %s"%self.__class__)
+            raise ValueError("value is out of range for %s"%self.__class__)
         if self._signed:
             return value
         else:
@@ -232,12 +235,12 @@ class SimpleType(Type, CallableValue):
         @summary:  Check if new value respect type declaration
                     Ex: UInt8 can be > 256
         @param value: new value (raw python type | lambda | function)
-        @raise InvalidValue: if value doesn't respect type range
+        @raise ValueError: if value doesn't respect type range
         @see: CallableValue.__setValue__
         """
         #check static value range
         if not callable(value) and not self.isInRange(value):
-            raise InvalidValue("value is out of range for %s"%self.__class__)
+            raise ValueError("value is out of range for %s"%self.__class__)
         
         CallableValue.__setValue__(self, value)
         
@@ -346,7 +349,7 @@ class SimpleType(Type, CallableValue):
         @param other:  SimpleType value or try to construct same type as self
                         around other value
         @return: add operator of inner values
-        @raise InvalidValue: if new value is out of bound
+        @raise ValueError: if new value is out of bound
         """
         if not isinstance(other, SimpleType):
             other = self.__class__(other)
@@ -358,7 +361,7 @@ class SimpleType(Type, CallableValue):
         @param other:  SimpleType value or try to construct same type as self
                         around other value
         @return: sub operator of inner values
-        @raise InvalidValue: if new value is out of bound
+        @raise ValueError: if new value is out of bound
         """
         if not isinstance(other, SimpleType):
             other = self.__class__(other)
@@ -370,7 +373,7 @@ class SimpleType(Type, CallableValue):
         @param other:  SimpleType value or try to construct same type as self
                         around other value
         @return: and operator of inner values
-        @raise InvalidValue: if new value is out of bound
+        @raise ValueError: if new value is out of bound
         """
         if not isinstance(other, SimpleType):
             other = self.__class__(other)
@@ -382,7 +385,7 @@ class SimpleType(Type, CallableValue):
         @param other:  SimpleType value or try to construct same type as self
                         around other value
         @return: or operator of inner values
-        @raise InvalidValue: if new value is out of bound
+        @raise ValueError: if new value is out of bound
         """
         if not isinstance(other, SimpleType):
             other = self.__class__(other)
@@ -394,7 +397,7 @@ class SimpleType(Type, CallableValue):
         @param other:  SimpleType value or try to construct same type as self
                         around other value
         @return: xor operator of inner values
-        @raise InvalidValue: if new value is out of bound
+        @raise ValueError: if new value is out of bound
         """
         if not isinstance(other, SimpleType):
             other = self.__class__(other)
@@ -406,7 +409,7 @@ class SimpleType(Type, CallableValue):
         @param other:  SimpleType value or try to construct same type as self
                         around other value
         @return: lshift operator of inner values
-        @raise InvalidValue: if new value is out of bound
+        @raise ValueError: if new value is out of bound
         """
         if not isinstance(other, SimpleType):
             other = self.__class__(other)
@@ -418,7 +421,7 @@ class SimpleType(Type, CallableValue):
         @param other:  SimpleType value or try to construct same type as self
                         around other value
         @return: rshift operator of inner values
-        @raise InvalidValue: if new value is out of bound
+        @raise ValueError: if new value is out of bound
         """
         if not isinstance(other, SimpleType):
             other = self.__class__(other)
@@ -506,7 +509,7 @@ class CompositeType(Type):
                 raise e
             
         if not self._readLen is None and readLen < self._readLen.value:
-            log.debug("Still have correct data in packet %s, read %s bytes as padding"%(self.__class__, self._readLen.value - readLen))
+            logger.debug("Still have correct data in packet %s, read %s bytes as padding"%(self.__class__, self._readLen.value - readLen))
             s.read(self._readLen.value - readLen)
             
     def __write__(self, s):
@@ -1069,13 +1072,13 @@ def CheckValueOnRead(cls):
                 to check value on read
                 if new value is different from old value
     @param cls: class that inherit from Type
-    @raise InvalidValue: if constness is not respected
+    @raise ValueError: if constness is not respected
     """
     oldRead = cls.read
     def read(self, s):
         old = deepcopy(self)
         oldRead(self, s)
         if self != old:
-            raise InvalidValue("CheckValueOnRead %s != %s"%(self, old))
+            raise ValueError("CheckValueOnRead %s != %s"%(self, old))
     cls.read = read
     return cls

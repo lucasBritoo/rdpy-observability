@@ -24,7 +24,11 @@ Use to build correct size packet and handle slow path and fast path mode
 """
 from rdptrio.core.layer import RawLayer
 from rdptrio.core.type import UInt8, UInt16Be, sizeof
+import logging
 # from rdpy.core.error import CallPureVirtualFuntion
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class Action(object):
     """
@@ -62,6 +66,7 @@ class IFastPathListener(object):
         @summary: initialize stack
         @param fastPathSender: {IFastPathSender}
         """
+        logger.debug('[TPKT/IFastPathListener/initFastPath]')
         self.setFastPathSender(fastPathSender)
         fastPathSender.setFastPathListener(self)
     
@@ -113,6 +118,7 @@ class TPKT(RawLayer, IFastPathSender):
         """
         @param presentation: {Layer} presentation layer, in RDP case is x224 layer
         """
+        logger.debug('[TPKT]')
         RawLayer.__init__(self, presentation)
         #length may be coded on more than 1 bytes
         self._lastShortLength = UInt8()
@@ -163,7 +169,6 @@ class TPKT(RawLayer, IFastPathSender):
                 return
             self.expect(self._lastShortLength.value - 2, self.readFastPath)
                 
-        
     def readExtendedHeader(self, data):
         """
         @summary: Header may be on 4 bytes

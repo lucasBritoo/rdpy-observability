@@ -24,14 +24,18 @@ Each channel have a particular role.
 The main channel is the graphical channel.
 It exist channel for file system order, audio channel, clipboard etc...
 """
-from rdpy.core.layer import LayerAutomata, IStreamSender, Layer
-from rdpy.core.type import sizeof, Stream, UInt8, UInt16Le, String
-from rdpy.core.error import InvalidExpectedDataException, InvalidValue, InvalidSize, CallPureVirtualFuntion
-from rdpy.protocol.rdp.t125.ber import writeLength
-import rdpy.core.log as log
+from rdptrio.core.layer import IStreamSender, Layer
+from rdptrio.core.type import sizeof, Stream, UInt8, UInt16Le, String
+# from rdpy.core.error import InvalidExpectedDataException, InvalidValue, InvalidSize, CallPureVirtualFuntion
+from rdptrio.protocol.rdp.t125.ber import writeLength
+# import rdpy.core.log as log
 
-import rdpy.protocol.rdp.t125.ber as ber, rdpy.protocol.rdp.t125.gcc as gcc, rdpy.protocol.rdp.t125.per as per
-import rdpy.security.rsa_wrapper as rsa
+import rdptrio.protocol.rdp.t125.ber as ber, rdptrio.protocol.rdp.t125.gcc as gcc, rdptrio.protocol.rdp.t125.per as per
+import rdptrio.security.rsa_wrapper as rsa
+
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class Message(object):
     """
@@ -69,30 +73,30 @@ class IGCCConfig(object):
         @return: {integer} mcs user id
         @see: mcs.IGCCConfig
         """
-        raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "getUserId", "IGCCConfig")) 
+        raise ValueError("%s:%s defined by interface %s"%(self.__class__, "getUserId", "IGCCConfig")) 
     
     def getChannelId(self):
         """
         @return: {integer} return channel id of proxy
         @see: mcs.IGCCConfig
         """
-        raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "getChannelId", "IGCCConfig")) 
+        raise ValueError("%s:%s defined by interface %s"%(self.__class__, "getChannelId", "IGCCConfig")) 
         
     def getGCCClientSettings(self):
         """
         @return: {gcc.Settings} mcs layer gcc client settings
         @see: mcs.IGCCConfig
         """
-        raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "getGCCClientSettings", "IGCCConfig")) 
+        raise ValueError("%s:%s defined by interface %s"%(self.__class__, "getGCCClientSettings", "IGCCConfig")) 
     
     def getGCCServerSettings(self):
         """
         @return: {gcc.Settings} mcs layer gcc server settings
         @see: mcs.IGCCConfig
         """
-        raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "getGCCServerSettings", "IGCCConfig")) 
+        raise ValueError("%s:%s defined by interface %s"%(self.__class__, "getGCCServerSettings", "IGCCConfig")) 
 
-class MCSLayer(LayerAutomata):
+class MCSLayer():
     """
     @summary: Multiple Channel Service layer
     the main layer of RDP protocol
@@ -163,7 +167,8 @@ class MCSLayer(LayerAutomata):
         @param receiveOpcode: {integer} opcode check when receive data
         @param sendOpcode: {integer} opcode use when send data
         """
-        LayerAutomata.__init__(self, presentation)
+        logger.debug('[MCSLayer]')
+        # LayerAutomata.__init__(self, presentation)
         self._clientSettings = gcc.clientSettings()
         self._serverSettings = gcc.serverSettings()
         #default user Id
@@ -219,13 +224,13 @@ class MCSLayer(LayerAutomata):
         data.readType(opcode)
         
         if self.readMCSPDUHeader(opcode.value, DomainMCSPDU.DISCONNECT_PROVIDER_ULTIMATUM):
-            log.info("MCS DISCONNECT_PROVIDER_ULTIMATUM")
+            logger.info("MCS DISCONNECT_PROVIDER_ULTIMATUM")
             self._transport.close()
             return
         
         #client case
         elif not self.readMCSPDUHeader(opcode.value, self._receiveOpcode):
-            raise InvalidExpectedDataException("Invalid expected MCS opcode receive data")
+            raise ValueError("Invalid expected MCS opcode receive data")
         
         #server user id
         per.readInteger16(data, Channel.MCS_USERCHANNEL_BASE)
@@ -237,7 +242,7 @@ class MCSLayer(LayerAutomata):
         
         #channel id doesn't match a requested layer
         if not self._channels.has_key(channelId):
-            log.error("receive data for an unconnected layer")
+            logger.error("receive data for an unconnected layer")
             return
 
         self._channels[channelId].recv(data) 
@@ -282,7 +287,7 @@ class MCSLayer(LayerAutomata):
         @return: {Tuple} (max_channels, max_users, max_tokens, max_pdu_size)
         """
         if not ber.readUniversalTag(s, ber.Tag.BER_TAG_SEQUENCE, True):
-            raise InvalidValue("bad BER tags")
+            raise ValueError("bad BER tags")
         ber.readLength(s)#length
         max_channels = ber.readInteger(s)
         max_users = ber.readInteger(s)
@@ -303,6 +308,7 @@ class Client(MCSLayer):
         @param presentation: {Layer} presentation layer
         @param virtualChannels: {Array(Layer)} list additional channels like rdpsnd... [tuple(mcs.ChannelDef, layer)]
         """
+        logger.debug('[MCSClient]')
         MCSLayer.__init__(self, presentation, DomainMCSPDU.SEND_DATA_INDICATION, DomainMCSPDU.SEND_DATA_REQUEST, virtualChannels)
         #use to know state of static channel
         self._isGlobalChannelRequested = False
@@ -365,10 +371,10 @@ class Client(MCSLayer):
         ber.readInteger(data)
         self.readDomainParams(data)
         if not ber.readUniversalTag(data, ber.Tag.BER_TAG_OCTET_STRING, False):
-            raise InvalidExpectedDataException("invalid expected BER tag")
+            raise ValueError("invalid expected BER tag")
         gccRequestLength = ber.readLength(data)
         if data.dataLen() != gccRequestLength:
-            raise InvalidSize("bad size of GCC request")
+            raise ValueError("bad size of GCC request")
         self._serverSettings = gcc.readConferenceCreateResponse(data)
         
         #send domain request
@@ -388,10 +394,10 @@ class Client(MCSLayer):
         data.readType(opcode)
         
         if not self.readMCSPDUHeader(opcode.value, DomainMCSPDU.ATTACH_USER_CONFIRM):
-            raise InvalidExpectedDataException("Invalid MCS PDU : ATTACH_USER_CONFIRM expected")
+            raise ValueError("Invalid MCS PDU : ATTACH_USER_CONFIRM expected")
         
         if per.readEnumerates(data) != 0:
-            raise InvalidExpectedDataException("Server reject user")
+            raise ValueError("Server reject user")
         
         self._userId = per.readInteger16(data, Channel.MCS_USERCHANNEL_BASE)
             
@@ -407,18 +413,18 @@ class Client(MCSLayer):
         data.readType(opcode)
         
         if not self.readMCSPDUHeader(opcode.value, DomainMCSPDU.CHANNEL_JOIN_CONFIRM):
-            raise InvalidExpectedDataException("Invalid MCS PDU : CHANNEL_JOIN_CONFIRM expected")
+            raise ValueError("Invalid MCS PDU : CHANNEL_JOIN_CONFIRM expected")
         
         confirm = per.readEnumerates(data)
         
         userId = per.readInteger16(data, Channel.MCS_USERCHANNEL_BASE)
         if self._userId != userId:
-            raise InvalidExpectedDataException("Invalid MCS User Id")
+            raise ValueError("Invalid MCS User Id")
         
         channelId = per.readInteger16(data)
         #must confirm global channel and user channel
         if (confirm != 0) and (channelId == Channel.MCS_GLOBAL_CHANNEL or channelId == self._userId):
-            raise InvalidExpectedDataException("Server must confirm static channel")
+            raise ValueError("Server must confirm static channel")
         
         if confirm == 0:
             serverNet = self._serverSettings.getBlock(gcc.MessageType.SC_NET)
@@ -509,7 +515,7 @@ class Server(MCSLayer):
         ber.readOctetString(data)
         
         if not ber.readBoolean(data):
-            raise InvalidExpectedDataException("invalid expected BER boolean tag")
+            raise ValueError("invalid expected BER boolean tag")
         
         self.readDomainParams(data)
         self.readDomainParams(data)
@@ -539,7 +545,7 @@ class Server(MCSLayer):
         data.readType(opcode)
         
         if not self.readMCSPDUHeader(opcode.value, DomainMCSPDU.ERECT_DOMAIN_REQUEST):
-            raise InvalidExpectedDataException("Invalid MCS PDU : ERECT_DOMAIN_REQUEST expected")
+            raise ValueError("Invalid MCS PDU : ERECT_DOMAIN_REQUEST expected")
         
         per.readInteger(data)
         per.readInteger(data)
@@ -557,7 +563,7 @@ class Server(MCSLayer):
         data.readType(opcode)
         
         if not self.readMCSPDUHeader(opcode.value, DomainMCSPDU.ATTACH_USER_REQUEST):
-            raise InvalidExpectedDataException("Invalid MCS PDU : ATTACH_USER_REQUEST expected")
+            raise ValueError("Invalid MCS PDU : ATTACH_USER_REQUEST expected")
         
         self.sendAttachUserConfirm()
         self.setNextState(self.recvChannelJoinRequest)
@@ -573,11 +579,11 @@ class Server(MCSLayer):
         data.readType(opcode)
         
         if not self.readMCSPDUHeader(opcode.value, DomainMCSPDU.CHANNEL_JOIN_REQUEST):
-            raise InvalidExpectedDataException("Invalid MCS PDU : CHANNEL_JOIN_REQUEST expected")
+            raise ValueError("Invalid MCS PDU : CHANNEL_JOIN_REQUEST expected")
         
         userId = per.readInteger16(data, Channel.MCS_USERCHANNEL_BASE)
         if self._userId != userId:
-            raise InvalidExpectedDataException("Invalid MCS User Id")
+            raise ValueError("Invalid MCS User Id")
         
         channelId = per.readInteger16(data)
         #actually algo support virtual channel but RDPY have no virtual channel

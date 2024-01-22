@@ -26,12 +26,14 @@ import sys, os, getopt, socket
 # from PyQt5 import QtGui, QtCore, QtWidgets
 # from rdpy.ui.qt5 import RDPClientQt
 from rdptrio.protocol.rdp import rdp
-from rdptrio.core.layer import RawLayerClientFactory
+# from rdptrio.core.layer import RawLayerClientFactory
 import logging
 from rdptrio.core.error import RDPSecurityNegoFail
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
-class RDPClientQtFactory(RawLayerClientFactory):
+class RDPClientQtFactory():#RawLayerClientFactory):
     """
     @summary: Factory create a RDP GUI client
     """
@@ -48,6 +50,7 @@ class RDPClientQtFactory(RawLayerClientFactory):
         @param security: {str} (ssl | rdp | nego)
         @param recodedPath: {str | None} Rss file Path
         """
+        logger.debug('[RDPClientQtFactory]')
         self._width = width
         self._height = height
         self._username = username
@@ -58,13 +61,17 @@ class RDPClientQtFactory(RawLayerClientFactory):
         self._optimized = optimized
         self._nego = security == "nego"
         self._recodedPath = recodedPath
+        
         if self._nego:
             #compute start nego nla need credentials
             if username != "" and password != "":
+                logger.debug('[RDPClientQtFactory] Using RDP_LEVEL_NLA')
                 self._security = rdp.SecurityLevel.RDP_LEVEL_NLA
             else:
+                logger.debug('[RDPClientQtFactory] Using RDP_LEVEL_SSL')
                 self._security = rdp.SecurityLevel.RDP_LEVEL_SSL
         else:
+            logger.debug(f'[RDPClientQtFactory] Using {security}')
             self._security = security
         self._w = None
         
@@ -76,15 +83,7 @@ class RDPClientQtFactory(RawLayerClientFactory):
         @param addr: destination address
         @return: RDPClientQt
         """
-        #create client observer
-        # self._client = RDPClientQt(controller, self._width, self._height)
-        #create qt widget
-        # self._w = self._client.getWidget()
-        # self._w.setWindowTitle('rdpy-rdpclient')
-        # if self._fullscreen:
-        #     self._w.showFullScreen()
-        # else:
-        #     self._w.show()
+        logger.debug('[RDPClientQtFactory/buildObserver] BuildObserver Init')
         
         controller.setUsername(self._username)
         controller.setPassword(self._passwod)
@@ -92,41 +91,26 @@ class RDPClientQtFactory(RawLayerClientFactory):
         controller.setKeyboardLayout(self._keyboardLayout)
         controller.setHostname(socket.gethostname())
         if self._optimized:
+            logger.debug("[RDPClientQtFactory/buildObserver] Using Performance Session")
             controller.setPerformanceSession()
+            
         controller.setSecurityLevel(self._security)
+            
+    def buildProtocol(self, addr):
+        """
+        @summary: Function call from twisted
+        @param addr: destination address
+        """
         
-        breakpoint()
-        # return self._client
-    
-    def clientConnectionLost(self, connector, reason):
-        """
-        @summary: Connection lost event
-        @param connector: twisted connector use for rdp connection (use reconnect to restart connection)
-        @param reason: str use to advertise reason of lost connection
-        """
-        #try reconnect with basic RDP security
-        if reason.type == RDPSecurityNegoFail and self._nego:
-            #stop nego
-            logging.info("due to security nego error back to standard RDP security layer")
-            self._nego = False
-            self._security = rdp.SecurityLevel.RDP_LEVEL_RDP
-            self._client._widget.hide()
-            connector.connect()
-            return
+        logger.debug('[RDPClientQtFactory/buildProtocol] BuildProtocol Init')
         
-        logging.info("Lost connection : %s"%reason)
-        # reactor.stop()
-        #app.exit()
+        controller = rdp.RDPClientController()
         
-    def clientConnectionFailed(self, connector, reason):
-        """
-        @summary: Connection failed event
-        @param connector: twisted connector use for rdp connection (use reconnect to restart connection)
-        @param reason: str use to advertise reason of lost connection
-        """
-        logging.info("Connection failed : %s"%reason)
-        # reactor.stop()
-        #app.exit()
+        self.buildObserver(controller, addr)
+        rawLayer = controller.getProtocol()
+        rawLayer.setFactory(self)
+        return rawLayer
+        
         
 def autoDetectKeyboardLayout():
     """

@@ -24,7 +24,7 @@ http://msdn.microsoft.com/en-us/library/cc240508.aspx
 
 import hashlib
 from rdptrio.core.type import UInt8, UInt16Le, UInt32Le, CompositeType, CallableValue, String, Stream, sizeof, FactoryType, ArrayType
-import rdptrio.protocol.rdp.t125.per as per, rdpy.protocol.rdp.t125.mcs as mcs
+import rdptrio.protocol.rdp.t125.per as per, rdptrio.protocol.rdp.t125.mcs as mcs
 # from rdpy.core.error import InvalidExpectedDataException
 # from rdpy.core import log
 import logging

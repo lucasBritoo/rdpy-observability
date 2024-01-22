@@ -270,11 +270,11 @@ if __name__ == '__main__':
         ip, port = args[0], "3389"
     
     #create application
-    app = QtWidgets.QApplication(sys.argv)
+    # app = QtWidgets.QApplication(sys.argv)
     
     #add qt5 reactor
-    import qt5reactor
-    qt5reactor.install()
+    # import qt5reactor
+    # qt5reactor.install()
     
     # if fullscreen:
     #     width = QtGui.QDesktopWidget().screenGeometry().width()
@@ -283,6 +283,7 @@ if __name__ == '__main__':
     log.info("keyboard layout set to %s"%keyboardLayout)
     
     from twisted.internet import reactor
+    breakpoint()
     reactor.connectTCP(ip, int(port), RDPClientQtFactory(width, height, username, password, domain, fullscreen, keyboardLayout, optimized, "nego", recodedPath))
     reactor.run()
-    app.exec_()
+    # app.exec_()

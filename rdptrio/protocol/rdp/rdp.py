@@ -28,9 +28,12 @@ import rdptrio.protocol.rdp.pdu.caps as PduCaps
 # import rdpy.protocol.rdp.pdu as pdu
 # import rdpy.core.log as log
 import logging
-import rdptrio.protocol.rdp.tpkt as tpkt, rdpy.protocol.rdp.x224 as x224, rdpy.protocol.rdp.sec as sec
+import rdptrio.protocol.rdp.tpkt as tpkt, rdptrio.protocol.rdp.x224 as x224, rdptrio.protocol.rdp.sec as sec
 from rdptrio.protocol.rdp.t125 import mcs, gcc
 from rdptrio.protocol.rdp.nla import cssp, ntlm
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class SecurityLevel(object):
     """
@@ -46,6 +49,9 @@ class RDPClientController():
     Manage RDP stack as client
     """
     def __init__(self):
+        
+        logger.debug('[RDPClientController]')
+        
         #list of observer
         self._clientObserver = []
         #PDU layer

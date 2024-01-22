@@ -26,7 +26,7 @@ from rdptrio.core.type import CompositeType, CallableValue, String, UInt8, UInt1
 # from rdpy.core.error import InvalidExpectedDataException
 # import rdpy.core.log as log
 import logging
-import rdptrio.protocol.rdp.pdu.caps as caps, rdpy.protocol.rdp.pdu.order as order
+import rdptrio.protocol.rdp.pdu.caps as caps, rdptrio.protocol.rdp.pdu.order as order
  
 class PDUType(object):
     """
