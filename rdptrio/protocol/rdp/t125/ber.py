@@ -22,7 +22,7 @@ Basic Encoding Rules use in RDP.
 ASN.1 standard
 """
 
-from rdptrio.core.type import UInt8, UInt16Be, UInt32Be, String
+# from rdptrio.core.type import UInt8, UInt16Be, UInt32Be, String
 # from rdpy.core.error import InvalidExpectedDataException, InvalidSize
 
 class BerPc(object):

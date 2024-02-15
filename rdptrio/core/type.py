@@ -547,303 +547,241 @@ class CompositeType(Type):
 All simple Raw type use in RDPY
 """
 
-class UInt8(SimpleType):
+class UInt8():
     """
     @summary: unsigned byte
     """    
-    def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
+    def __init__(self, value = 0, name = ""):
         """
         @param value: python value wrap
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
         """
-        SimpleType.__init__(self, "B", 1, False, value, conditional = conditional, optional = optional, constant = constant)
+        self._structFormat = "B"
+        self._size = 1
+        self._signed = False
+        self._name = name
+        self._value = struct.pack(self._structFormat, value)
 
-class SInt8(SimpleType):
-    """
-    @summary: signed byte
-    """   
-    def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
-        """
-        @param value: python value wrap
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
-        """
-        SimpleType.__init__(self, "b", 1, True, value, conditional = conditional, optional = optional, constant = constant)
-        
-        
-class UInt16Be(SimpleType):
-    """
-    @summary: unsigned short
-               with Big endian representation in stream
-    """
-    def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
-        """
-        @param value: python value wrap
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
-        """
-        SimpleType.__init__(self, ">H", 2, False, value, conditional = conditional, optional = optional, constant = constant)
-        
-class UInt16Le(SimpleType):
+class UInt16Le():
     """
     @summary: unsigned short
                with Little endian representation in stream
     """
-    def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
+    def __init__(self, value = 0, name = ""):
         """
         @param value: python value wrap
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
         """
-        SimpleType.__init__(self, "<H", 2, False, value, conditional = conditional, optional = optional, constant = constant)
-        
-class SInt16Le(SimpleType):
+        self._structFormat = "<H"
+        self._size = 2
+        self._signed = False
+        self._name = name
+        self._value = struct.pack(self._structFormat, value)
+
+class UInt16Be():
     """
-    @summary: signed short
-               with Little endian representation in stream
-    """
-    def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
-        """
-        @param value: python value wrap
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
-        """
-        SimpleType.__init__(self, "<h", 2, True, value, conditional = conditional, optional = optional, constant = constant)
-        
-class UInt32Be(SimpleType):
-    """
-    @summary: unsigned int
+    @summary: unsigned short
                with Big endian representation in stream
     """
-    def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
+    def __init__(self, value = 0, name = ""):
         """
         @param value: python value wrap
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
         """
-        SimpleType.__init__(self, ">I", 4, False, value, conditional = conditional, optional = optional, constant = constant)
-        
-class UInt32Le(SimpleType):
+        self._structFormat = ">H"
+        self._size = 2
+        self._signed = False
+        self._name = name
+        self._value = struct.pack(self._structFormat, value)
+
+class UInt32Le():
     """
     @summary: unsigned int
                with Little endian representation in stream
     """
-    def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
+    def __init__(self, value = 0, name = ""):
         """
         @param value: python value wrap
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
         """
-        SimpleType.__init__(self, "<I", 4, False, value, conditional = conditional, optional = optional, constant = constant)
+        
+        self._structFormat = "<I"
+        self._size = 4
+        self._signed = False
+        self._name = name
+        self._value = struct.pack(self._structFormat, value)
+
+class StreamBuffer:
+    def __init__(self):
+        self._bytes = bytearray()
+
+    def append(self, byte):
+        if isinstance(byte, int):
+            self._bytes.append(byte)
+        elif isinstance(byte, bytes):
+            self._bytes.extend(byte)
+        else:
+            raise TypeError(f"Tipo não suportado: {type(byte)}")
+
+    def getBuffer(self):
+        return bytes(self._bytes)
+
+# class SInt8(SimpleType):
+#     """
+#     @summary: signed byte
+#     """   
+#     def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
+#         """
+#         @param value: python value wrap
+#         @param conditional :    Callable object
+#                                  Read and Write operation depend on return of this function
+#         @param optional:   If there is no enough byte in current stream
+#                             And optional is True, read type is ignored
+#         @param constant:   Check if object value doesn't change after read operation
+#         """
+#         SimpleType.__init__(self, "b", 1, True, value, conditional = conditional, optional = optional, constant = constant)
+        
+
+ 
+# class SInt16Le(SimpleType):
+#     """
+#     @summary: signed short
+#                with Little endian representation in stream
+#     """
+#     def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
+#         """
+#         @param value: python value wrap
+#         @param conditional :    Callable object
+#                                  Read and Write operation depend on return of this function
+#         @param optional:   If there is no enough byte in current stream
+#                             And optional is True, read type is ignored
+#         @param constant:   Check if object value doesn't change after read operation
+#         """
+#         SimpleType.__init__(self, "<h", 2, True, value, conditional = conditional, optional = optional, constant = constant)
+        
+# class UInt32Be(SimpleType):
+#     """
+#     @summary: unsigned int
+#                with Big endian representation in stream
+#     """
+#     def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
+#         """
+#         @param value: python value wrap
+#         @param conditional :    Callable object
+#                                  Read and Write operation depend on return of this function
+#         @param optional:   If there is no enough byte in current stream
+#                             And optional is True, read type is ignored
+#         @param constant:   Check if object value doesn't change after read operation
+#         """
+#         SimpleType.__init__(self, ">I", 4, False, value, conditional = conditional, optional = optional, constant = constant)
+        
+
     
-class SInt32Le(SimpleType):
-    """
-    @summary: signed int
-               with Little endian representation in stream
-    """
-    def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
-        """
-        @param value: python value wrap
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
-        """
-        SimpleType.__init__(self, "<I", 4, True, value, conditional = conditional, optional = optional, constant = constant)
+# class SInt32Le(SimpleType):
+#     """
+#     @summary: signed int
+#                with Little endian representation in stream
+#     """
+#     def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
+#         """
+#         @param value: python value wrap
+#         @param conditional :    Callable object
+#                                  Read and Write operation depend on return of this function
+#         @param optional:   If there is no enough byte in current stream
+#                             And optional is True, read type is ignored
+#         @param constant:   Check if object value doesn't change after read operation
+#         """
+#         SimpleType.__init__(self, "<I", 4, True, value, conditional = conditional, optional = optional, constant = constant)
         
-class SInt32Be(SimpleType):
-    """
-    @summary: signed int
-               with Big endian representation in stream
-    """
-    def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
-        """
-        @param value: python value wrap
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
-        """
-        SimpleType.__init__(self, ">I", 4, True, value, conditional = conditional, optional = optional, constant = constant)
+# class SInt32Be(SimpleType):
+#     """
+#     @summary: signed int
+#                with Big endian representation in stream
+#     """
+#     def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
+#         """
+#         @param value: python value wrap
+#         @param conditional :    Callable object
+#                                  Read and Write operation depend on return of this function
+#         @param optional:   If there is no enough byte in current stream
+#                             And optional is True, read type is ignored
+#         @param constant:   Check if object value doesn't change after read operation
+#         """
+#         SimpleType.__init__(self, ">I", 4, True, value, conditional = conditional, optional = optional, constant = constant)
         
-class UInt24Be(SimpleType):
-    """
-    @summary: unsigned 24 bit integer
-               with Big endian representation in stream
-    """
-    def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
-        """
-        @param value: python value wrap
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
-        """
-        SimpleType.__init__(self, ">I", 3, False, value, conditional = conditional, optional = optional, constant = constant)
+# class UInt24Be(SimpleType):
+#     """
+#     @summary: unsigned 24 bit integer
+#                with Big endian representation in stream
+#     """
+#     def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
+#         """
+#         @param value: python value wrap
+#         @param conditional :    Callable object
+#                                  Read and Write operation depend on return of this function
+#         @param optional:   If there is no enough byte in current stream
+#                             And optional is True, read type is ignored
+#         @param constant:   Check if object value doesn't change after read operation
+#         """
+#         SimpleType.__init__(self, ">I", 3, False, value, conditional = conditional, optional = optional, constant = constant)
         
-    def __write__(self, s):
-        """
-        @summary: special write for a special type
-        @param s: Stream
-        """
-        s.write(struct.pack(">I", self.value)[1:])
+#     def __write__(self, s):
+#         """
+#         @summary: special write for a special type
+#         @param s: Stream
+#         """
+#         s.write(struct.pack(">I", self.value)[1:])
         
-    def __read__(self, s):
-        """
-        @summary: special read for a special type
-        @param s: Stream
-        """
-        self.value = struct.unpack(self._structFormat, '\x00' + s.read(self._typeSize))[0]
+#     def __read__(self, s):
+#         """
+#         @summary: special read for a special type
+#         @param s: Stream
+#         """
+#         self.value = struct.unpack(self._structFormat, '\x00' + s.read(self._typeSize))[0]
         
-class UInt24Le(SimpleType):
-    """
-    @summary: unsigned 24 bit integer
-               with Little endian representation in stream
-    """
-    def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
-        """
-        @param value: python value wrap
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
-        """
-        SimpleType.__init__(self, "<I", 3, False, value, conditional = conditional, optional = optional, constant = constant)   
+# class UInt24Le(SimpleType):
+#     """
+#     @summary: unsigned 24 bit integer
+#                with Little endian representation in stream
+#     """
+#     def __init__(self, value = 0, conditional = lambda:True, optional = False, constant = False):
+#         """
+#         @param value: python value wrap
+#         @param conditional :    Callable object
+#                                  Read and Write operation depend on return of this function
+#         @param optional:   If there is no enough byte in current stream
+#                             And optional is True, read type is ignored
+#         @param constant:   Check if object value doesn't change after read operation
+#         """
+#         SimpleType.__init__(self, "<I", 3, False, value, conditional = conditional, optional = optional, constant = constant)   
             
-    def __write__(self, s):
-        """
-        @summary: special write for a special type
-        @param s: Stream
-        """
-        #don't write first byte
-        s.write(struct.pack("<I", self.value)[:3])
+#     def __write__(self, s):
+#         """
+#         @summary: special write for a special type
+#         @param s: Stream
+#         """
+#         #don't write first byte
+#         s.write(struct.pack("<I", self.value)[:3])
         
-    def __read__(self, s):
-        """
-        @summary: special read for a special type
-        @param s: Stream
-        """
-        self.value = struct.unpack(self._structFormat, s.read(self._typeSize) + '\x00')[0]
+#     def __read__(self, s):
+#         """
+#         @summary: special read for a special type
+#         @param s: Stream
+#         """
+#         self.value = struct.unpack(self._structFormat, s.read(self._typeSize) + '\x00')[0]
         
-class String(Type, CallableValue):
+class String():#Type, CallableValue):
     """
     @summary:  String type
                 Leaf in Type tree
     """
-    def __init__(self, value = "", readLen = None, conditional = lambda:True, optional = False, constant = False, unicode = False, until = None):
+    def __init__(self, value = "", name = ""):
         """
         @param value: python string use for inner value
-        @param readLen: length use to read in stream (SimpleType) if 0 read entire stream
-        @param conditional :    Callable object
-                                 Read and Write operation depend on return of this function
-        @param optional:   If there is no enough byte in current stream
-                            And optional is True, read type is ignored
-        @param constant:   Check if object value doesn't change after read operation
-        @param unicode: Encode and decode value as unicode
-        @param until: read until sequence is readed or write sequence at the end of string
         """
-        Type.__init__(self, conditional = conditional, optional = optional, constant = constant)
-        CallableValue.__init__(self, value)
+        #Type.__init__(self, conditional = conditional, optional = optional, constant = constant)
+        #CallableValue.__init__(self, value)
         #type use to know read length
-        self._readLen = readLen
-        self._unicode = unicode
-        self._until = until
-        
-    def __cmp__(self, other):
-        """
-        @summary: call raw compare value
-        @param other: other String parameter
-        @return: if two inner value are equals
-        """
-        return cmp(self.value, other.value)
-    
-    def __hash__(self):
-        """
-        @summary: hash function to treat simple type in hash collection
-        @return: hash of inner value
-        """
-        return hash(self.value)
-    
-    def __str__(self):
-        """
-        @summary: call when str function is call
-        @return: inner python string
-        """
-        return self.value
-    
-    def __write__(self, s):
-        """
-        @summary:  Write the inner value after evaluation
-                    Append until sequence if present
-                    Encode in unicode format if asked
-        @param s: Stream
-        """
-        toWrite = self.value
-        
-        if not self._until is None:
-            toWrite += self._until
-            
-        if self._unicode:
-            s.write(encodeUnicode(self.value))
-        else:
-            s.write(self.value)
-    
-    def __read__(self, s):
-        """
-        @summary:  Read readLen bytes as string
-                    If readLen is None read until 'until' sequence match
-                    If until sequence is None read until end of stream
-        @param s: Stream
-        """
-        if self._readLen is None:
-            if self._until is None:
-                self.value = s.getvalue()[s.pos:]
-            else:
-                self.value = ""
-                while self.value[-len(self._until):] != self._until and s.dataLen() != 0:
-                    self.value += s.read(1)
-        else:
-            self.value = s.read(self._readLen.value)
-        
-        if self._unicode:
-            self.value = decodeUnicode(self.value)
-        
-    def __sizeof__(self):
-        """
-        @summary:  return length of string
-                    if string is unicode encode return 2*len(str) + 2
-        @return: length of inner string
-        """
-        if self._unicode:
-            return 2 * len(self.value) + 2
-        else:
-            return len(self.value)
+        self._value = value.encode('utf-8')
+        self._size = len(self._value)
+        self._name = name
+
     
 def encodeUnicode(s):
     """
@@ -867,72 +805,72 @@ def decodeUnicode(s):
         i += 1
     return r
 
-class Stream(StringIO):
-    """
-    @summary:  Stream use to read all types
-    """
-    def dataLen(self):
-        """
-        @return: not yet read length
-        """
-        return self.len - self.pos
+# class Stream(StringIO):
+#     """
+#     @summary:  Stream use to read all types
+#     """
+#     def dataLen(self):
+#         """
+#         @return: not yet read length
+#         """
+#         return self.len - self.pos
     
-    def readLen(self):
-        """
-        @summary: compute already read size
-        @return: read size of stream
-        """
-        return self.pos
+#     def readLen(self):
+#         """
+#         @summary: compute already read size
+#         @return: read size of stream
+#         """
+#         return self.pos
     
-    def readType(self, value):
-        """
-        @summary:  call specific read on type object
-                    or iterate over tuple elements
-                    rollback read if error occurred during read value
-        @param value: (tuple | Type) object
-        """
-        #read each tuple
-        if isinstance(value, tuple) or isinstance(value, list):
-            for element in value:
-                try:
-                    self.readType(element)
-                except Exception as e:
-                    #rollback already readed elements
-                    for tmpElement in value:
-                        if tmpElement == element:
-                            break
-                        self.pos -= sizeof(tmpElement)
-                    raise e
-            return
+#     def readType(self, value):
+#         """
+#         @summary:  call specific read on type object
+#                     or iterate over tuple elements
+#                     rollback read if error occurred during read value
+#         @param value: (tuple | Type) object
+#         """
+#         #read each tuple
+#         if isinstance(value, tuple) or isinstance(value, list):
+#             for element in value:
+#                 try:
+#                     self.readType(element)
+#                 except Exception as e:
+#                     #rollback already readed elements
+#                     for tmpElement in value:
+#                         if tmpElement == element:
+#                             break
+#                         self.pos -= sizeof(tmpElement)
+#                     raise e
+#             return
         
-        #optional value not present
-        if self.dataLen() == 0 and value._optional:
-            return
+#         #optional value not present
+#         if self.dataLen() == 0 and value._optional:
+#             return
 
-        value.read(self)
+#         value.read(self)
         
-    def readNextType(self, t):
-        """
-        @summary: read next type but didn't consume it
-        @param t: Type element
-        """
-        self.readType(t)
-        self.pos -= sizeof(t)
+#     def readNextType(self, t):
+#         """
+#         @summary: read next type but didn't consume it
+#         @param t: Type element
+#         """
+#         self.readType(t)
+#         self.pos -= sizeof(t)
     
-    def writeType(self, value):
-        """
-        @summary:  Call specific write on type object
-                    or iterate over tuple element
-        @param value: (tuple | Type)
-        """
-        #write each element of tuple
-        logger.debug(f'[Type/Stream/writeType]')
-        if isinstance(value, tuple) or isinstance(value, list):
-            for element in value:
-                self.writeType(element)
-            return
+#     def writeType(self, value):
+#         """
+#         @summary:  Call specific write on type object
+#                     or iterate over tuple element
+#         @param value: (tuple | Type)
+#         """
+#         #write each element of tuple
+#         logger.debug(f'[Type/Stream/writeType]')
+#         if isinstance(value, tuple) or isinstance(value, list):
+#             for element in value:
+#                 self.writeType(element)
+#             return
         
-        value.write(self)
+#         value.write(self)
         
 class ArrayType(Type):
     """
@@ -1051,19 +989,19 @@ class FactoryType(Type):
         """
         return sizeof(self._value)
 
-def CheckValueOnRead(cls):
-    """
-    @summary:  Wrap read method of class
-                to check value on read
-                if new value is different from old value
-    @param cls: class that inherit from Type
-    @raise ValueError: if constness is not respected
-    """
-    oldRead = cls.read
-    def read(self, s):
-        old = deepcopy(self)
-        oldRead(self, s)
-        if self != old:
-            raise ValueError("CheckValueOnRead %s != %s"%(self, old))
-    cls.read = read
-    return cls
+# def CheckValueOnRead(cls):
+    # """
+    # @summary:  Wrap read method of class
+    #             to check value on read
+    #             if new value is different from old value
+    # @param cls: class that inherit from Type
+    # @raise ValueError: if constness is not respected
+    # """
+    # oldRead = cls.read
+    # def read(self, s):
+    #     old = deepcopy(self)
+    #     oldRead(self, s)
+    #     if self != old:
+    #         raise ValueError("CheckValueOnRead %s != %s"%(self, old))
+    # cls.read = read
+    # return cls

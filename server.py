@@ -7,7 +7,7 @@ from itertools import count
 # - must be in between 1024 and 65535
 # - can't be in use by some other program on your computer
 # - must match what we set in our echo client
-PORT = 20201
+PORT = 3389
 
 CONNECTION_COUNTER = count()
 
@@ -20,7 +20,7 @@ async def echo_server(server_stream):
     try:
         async for data in server_stream:
             print(f"echo_server {ident}: received data {data!r}")
-            await server_stream.send_all(data)
+            #await server_stream.send_all(data)
         print(f"echo_server {ident}: connection closed")
     # FIXME: add discussion of (Base)ExceptionGroup to the tutorial, and use
     # exceptiongroup.catch() here. (Not important in this case, but important

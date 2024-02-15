@@ -117,7 +117,7 @@ from twisted.internet.abstract import FileDescriptor
 from rdptrio.protocol.rdp.t125 import mcs
 from rdptrio.protocol.rdp import rdp
 #first that handle stream     
-from rdptrio.core.type import Stream
+#from rdptrio.core.type import Stream
 
 class RawLayerServerFactory(protocol.ServerFactory):
     """

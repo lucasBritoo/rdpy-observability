@@ -21,7 +21,7 @@
 Per encoded function
 """
 
-from rdptrio.core.type import UInt8, UInt16Be, UInt32Be, String
+# from rdptrio.core.type import UInt8, UInt16Be, UInt32Be, String
 # from rdpy.core.error import InvalidValue, InvalidExpectedDataException
 
 def readLength(s):

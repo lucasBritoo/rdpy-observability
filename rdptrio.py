@@ -1,39 +1,15 @@
-#!/usr/bin/python
-#
-# Copyright (c) 2014-2015 Sylvain Peyrefitte
-#
-# This file is part of rdpy.
-#
-# rdpy is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
-#
-"""
-example of use rdpy as rdp client
-"""
-
-import sys, os, getopt, socket
-
-# from PyQt5 import QtGui, QtCore, QtWidgets
-# from rdpy.ui.qt5 import RDPClientQt
+import sys, getopt
 from rdptrio.protocol.rdp import rdp
-# from rdptrio.core.layer import RawLayerClientFactory
 import logging
-from rdptrio.core.error import RDPSecurityNegoFail
+import trio
+import ssl
+from rdptrio.core.type import StreamBuffer
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG)
 
-class RDPClientQtFactory():#RawLayerClientFactory):
+class RDPClientQtFactory():
     """
     @summary: Factory create a RDP GUI client
     """
@@ -74,86 +50,101 @@ class RDPClientQtFactory():#RawLayerClientFactory):
             logger.debug(f'[RDPClientQtFactory] Using {security}')
             self._security = security
         self._w = None
-        
-    def buildObserver(self, controller, addr):
-        """
-        @summary:  Build RFB observer
-                    We use a RDPClientQt as RDP observer
-        @param controller: build factory and needed by observer
-        @param addr: destination address
-        @return: RDPClientQt
-        """
-        logger.debug('[RDPClientQtFactory/buildObserver] BuildObserver Init')
-        
-        controller.setUsername(self._username)
-        controller.setPassword(self._passwod)
-        controller.setDomain(self._domain)
-        controller.setKeyboardLayout(self._keyboardLayout)
-        controller.setHostname(socket.gethostname())
-        if self._optimized:
-            logger.debug("[RDPClientQtFactory/buildObserver] Using Performance Session")
-            controller.setPerformanceSession()
-            
-        controller.setSecurityLevel(self._security)
-        
-        self.controller = controller
-            
+              
     def buildProtocol(self, addr):
         """
         @summary: Function call from twisted
         @param addr: destination address
         """
         
-        logger.debug('[RDPClientQtFactory/buildProtocol] BuildProtocol Init')
+        logging.info('[RDPClientQtFactory] [buildProtocol()]')
+
+        self.controller = rdp.RDPClientController()
         
-        controller = rdp.RDPClientController()
+        # controller.setUsername(self._username)
+        # controller.setPassword(self._passwod)
+        # controller.setDomain(self._domain)
+        # controller.setKeyboardLayout(self._keyboardLayout)
+        # controller.setHostname(socket.gethostname())
+        # if self._optimized:
+        #     logger.debug("[RDPClientQtFactory/buildObserver] Using Performance Session")
+        #     controller.setPerformanceSession()
+            
+        # controller.setSecurityLevel(self._security)
         
-        self.buildObserver(controller, addr)
-        rawLayer = controller.getProtocol()
-        rawLayer.setFactory(self)
-        return rawLayer
-        
-        
-def autoDetectKeyboardLayout():
-    """
-    @summary: try to auto detect keyboard layout
-    """
-    try:
-        if os.name == 'posix':    
-            from subprocess import check_output
-            result = check_output(["setxkbmap", "-print"])
-            if 'azerty' in result:
-                return "fr"
-        elif os.name == 'nt':
-            import win32api, win32con, win32process
-            from ctypes import windll
-            w = windll.user32.GetForegroundWindow() 
-            tid = windll.user32.GetWindowThreadProcessId(w, 0) 
-            result = windll.user32.GetKeyboardLayout(tid)
-            log.info(result)
-            if result == 0x40c040c:
-                return "fr"
-    except Exception as e:
-        logging.info("failed to auto detect keyboard layout " + str(e))
-        pass
-    return "en"
-        
-def help():
-    '''
-        Usage: rdpy-rdpclient [options] ip[:port]"
-        \t-u: user name
-        \t-p: password
-        \t-d: domain
-        \t-w: width of screen [default : 1024]
-        \t-l: height of screen [default : 800]
-        \t-f: enable full screen mode [default : False]
-        \t-k: keyboard layout [en|fr] [default : en]
-        \t-o: optimized session (disable costly effect) [default : False]
-        \t-r: rss_filepath Recorded Session Scenario [default : None]
-    '''
-     
-if __name__ == '__main__':
+        # self.controller = controller
+        # rawLayer = controller.getProtocol()
+        # rawLayer.setFactory(self)
+        # return rawLayer
     
+    async def sendX224(self, client_stream):
+        await self.controller.sendConnectionRequestPDU(client_stream)
+        await trio.sleep(1)
+        # self.controller._x224Layer.connect()
+        # self.controller._x224Layer.sendConnectionRequest()
+        
+    async def sender(self, client_stream, packets):
+        
+        while(True):
+            packet = packets.getPacket()
+            buffer = StreamBuffer()
+            
+            if packet:
+                
+                countBytes = 0
+                for frame in packet:
+                    frameValue = frame._value
+
+                    if not isinstance(frameValue, bytes):
+                        for frameInternal in frameValue:
+                            buffer.append(frameInternal._value)
+                            logger.debug(f"Name: {frameInternal._name}")
+                            logger.debug(f"Frame: {frameInternal}")
+                            logger.debug(f"Value: {frameInternal._value}")
+                            countBytes += frameInternal._size
+
+                    else:
+                        buffer.append(frameValue)
+                        logger.debug(f"Name: {frame._name}")
+                        logger.debug(f"Frame: {frame}")
+                        logger.debug(f"Value: {frameValue}")
+                        countBytes += frame._size
+                
+                logger.debug(f"Stream Buffer: {buffer.getBuffer()}")
+                await client_stream.send_all(buffer.getBuffer())
+                logger.debug(f"Stream Buffer Size: {countBytes}")
+                #await self.controller.sendConnectionRequestPDU(client_stream)
+            
+            await trio.sleep(1)
+   
+    
+    async def receiver(self,client_stream):
+            try:
+                async for data in client_stream:
+                    print(f"receiver: got data {data}")
+                    self.controller._tpktLayer.readHeader(data)
+                    sys.exit()
+                print("receiver: connection closed")
+            except trio.BrokenResourceError:
+                pass
+    # async def receiver(self, client_stream):
+    #     try:
+    #         received_data = bytearray()
+    #         while len(received_data):
+    #             chunk = await client_stream.receive_some(num_bytes - len(received_data))
+    #             if not chunk:
+    #                 break  # Se não houver mais dados, sai do loop
+    #             received_data.extend(chunk)
+
+    #         print(f"receiver: got data {received_data!r}")
+    #         # Restante da lógica para processar os dados recebidos
+
+    #     except trio.BrokenResourceError:
+    #         pass
+    #     except trio.EndOfChannel:
+    #         print("receiver: connection closed")
+        
+async def main():
     #default script argument
     username = ""
     password = ""
@@ -163,7 +154,7 @@ if __name__ == '__main__':
     fullscreen = False
     optimized = False
     recodedPath = None
-    keyboardLayout = autoDetectKeyboardLayout()
+    keyboardLayout = "en"
     
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hfou:p:d:w:l:k:r:")
@@ -197,13 +188,32 @@ if __name__ == '__main__':
     else:
         ip, port = args[0], "3389"
     
-
-    logging.info("keyboard layout set to %s"%keyboardLayout)
-    
-    # from twisted.internet import reactor
-
-    # reactor.connectTCP(ip, int(port), RDPClientQtFactory(width, height, username, password, domain, fullscreen, keyboardLayout, optimized, "nego", recodedPath))
     client = RDPClientQtFactory(width, height, username, password, domain, fullscreen, keyboardLayout, optimized, "nego", recodedPath)
-    # breakpoint()
     layer = client.buildProtocol(f'{ip}:{port}')
-    client.controller._x224Layer.connect()
+    
+    client_stream = await trio.open_tcp_stream(ip, int(port))
+    
+    # ssl_context = ssl.create_default_context()
+    # ssl_context.check_hostname = False
+    # ssl_context.verify_mode = ssl.CERT_NONE
+    # client_stream = trio.SSLStream(tcp_stream, ssl_context=ssl_context)
+    # await client_stream.do_handshake()
+    client.controller.sendConnect()
+    
+    async with client_stream:
+        async with trio.open_nursery() as nursery:
+
+            nursery.start_soon(client.receiver, client_stream)
+            
+            nursery.start_soon(client.sender, client_stream, client.controller._sendQueue)
+            # nursery.start_soon(client.sendX224, client_stream)
+
+            
+            
+if __name__ == '__main__':
+    
+    
+    trio.run(main)
+    # client.sendX224()
+    # client.controller._x224Layer.connect()
+    
